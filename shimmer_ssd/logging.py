@@ -630,7 +630,7 @@ class LogGWImagesCallback(pl.Callback):
                                  torch.tensor([1, 0, 0], device=device).expand(32, 3)], 
                                 dim=-1
                             )
-                            # print(f"Shape of samples[1]: {samples[1].shape}")
+                            print(f"Shape of samples[1]: {samples[1].shape}")
                         self.log_samples(
                             logger,
                             pl_module,
@@ -652,7 +652,7 @@ class LogGWImagesCallback(pl.Callback):
                                  torch.tensor([1, 0, 0], device=device).expand(32, 3)], 
                                 dim=-1
                             )
-                            # print(f"Shape of samples[1]: {samples[1].shape}")
+                            print(f"Shape of samples[1]: {samples[1].shape}")
                         self.log_samples(
                             logger,
                             pl_module,

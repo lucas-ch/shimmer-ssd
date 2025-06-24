@@ -166,7 +166,7 @@ class AttributeDomainModule(DomainModule):
         reconstruction_loss_categories = F.cross_entropy(
             reconstruction_categories,
             x_categories.argmax(dim=1),
-            reduction="sum",
+            reduction=None,
         )
         reconstruction_loss_attributes = gaussian_nll(
             reconstruction_attributes, torch.tensor(0), x_attributes
@@ -226,7 +226,7 @@ class AttributeDomainModule(DomainModule):
 
 
 class AttributeWithUnpairedDomainModule(DomainModule):
-    in_dim = 11
+    in_dim = 8
 
     def __init__(
         self,
@@ -316,7 +316,8 @@ class AttributeWithUnpairedDomainModule(DomainModule):
 
 
 class AttributeLegacyDomainModule(DomainModule):
-    def __init__(self, latent_dim: int = 11):
+
+    def __init__(self, latent_dim = 8):
         self.latent_dim = latent_dim
         super().__init__(self.latent_dim)
         self.save_hyperparameters()
@@ -326,11 +327,29 @@ class AttributeLegacyDomainModule(DomainModule):
     ) -> LossOutput:
         pred_cat, pred_attr = self.decode(pred)
         target_cat, target_attr = self.decode(target)
-        loss_attr = F.mse_loss(pred_attr, target_attr, reduction="mean")
-        loss_cat = F.cross_entropy(pred_cat/self.temperature, torch.argmax(target_cat, 1))
-        loss = loss_cat + self.alpha*loss_attr
+        
+        # Split attributes into rotation and non-rotation parts
+        pred_attr_nonrot = pred_attr[:, :-2]
+        pred_attr_rot = pred_attr[:, -2:]
+        target_attr_nonrot = target_attr[:, :-2]
+        target_attr_rot = target_attr[:, -2:]
+        reduction = "mean"
+        # Calculate separate losses
+        loss_attr_nonrot = F.mse_loss(pred_attr_nonrot, target_attr_nonrot, reduction=reduction)
+        loss_attr_rot = F.mse_loss(pred_attr_rot, target_attr_rot, reduction=reduction)
+        loss_attr = loss_attr_nonrot + loss_attr_rot
+        loss_cat = F.cross_entropy(pred_cat/self.temperature, torch.argmax(target_cat, 1), reduction=reduction)
+        
+        # Get beta coefficient for rotation with default value 1.0
+        beta = getattr(self, 'beta', 2.0)
+        
+        # Combine losses with weights
+        loss = self.alpha * (loss_attr_nonrot + beta * loss_attr_rot) + loss_cat
 
-        return LossOutput(loss, metrics={"loss_attr": loss_attr, "loss_cat": loss_cat})
+        return LossOutput(loss, metrics={
+            "loss_attr": loss_attr, 
+            "loss_cat": loss_cat
+        })
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         # print("Flag 0 : Before encoding attribute legacy_module")
@@ -346,9 +365,7 @@ class AttributeLegacyDomainModule(DomainModule):
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
         return self.decode(self.encode(x))
 
-    def load_hyperparameters(self, alpha : float = 1, temperature : float = 1):
-        if alpha==1 and temperature==1:
-            print("default alpha and temperature are loaded")
+    def load_hyperparameters(self, alpha, temperature):
         self.alpha = alpha
         self.temperature = temperature
         return self
