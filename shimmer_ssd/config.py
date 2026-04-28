@@ -42,6 +42,8 @@ class DomainModuleVariant(Enum):
     # attributes are used directly as the unimodal latent representations
     attr_legacy = (DomainType.attr, "legacy")
     attr_legacy_no_color = (DomainType.attr, "legacy_no_color")
+    cat = (DomainType.cat, "cat")
+    color = (DomainType.color, "color")
     # Same as "attr" but adds an unpaired attributes (information not available in the
     # other domains).
     attr_unpaired = (DomainType.attr, "unpaired")

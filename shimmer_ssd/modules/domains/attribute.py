@@ -313,7 +313,103 @@ class AttributeWithUnpairedDomainModule(DomainModule):
             },
         )
 
+class ColorDomainModule(DomainModule):
+    def __init__(self, latent_dim = 3):
+        self.latent_dim = latent_dim
+        super().__init__(self.latent_dim)
+        self.save_hyperparameters()
 
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:        
+        reduction = "mean"
+        loss = F.mse_loss(pred, target, reduction=reduction)
+        
+        # Get beta coefficient for rotation with default value 1.0
+        return LossOutput(loss, metrics={
+            "loss_color": loss, 
+        })
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.decode(self.encode(x))
+
+    def load_hyperparameters(self, alpha, temperature):
+        self.alpha = alpha
+        self.temperature = temperature
+        return self
+
+class CatDomainModule(DomainModule):
+    def __init__(self, latent_dim = 3):
+        self.latent_dim = latent_dim
+        super().__init__(self.latent_dim)
+        self.save_hyperparameters()
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:        
+        reduction = "mean"
+        # Calculate separate losses
+        loss = F.mse_loss(pred, target, reduction=reduction)
+        
+        # Get beta coefficient for rotation with default value 1.0
+        return LossOutput(loss, metrics={
+            "loss_attr": loss, 
+        })
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.decode(self.encode(x))
+
+    def load_hyperparameters(self, alpha, temperature):
+        self.alpha = alpha
+        self.temperature = temperature
+        return self
+
+class MyModule(DomainModule):
+    def __init__(self, latent_dim = 5):
+        self.latent_dim = latent_dim
+        super().__init__(self.latent_dim)
+        self.save_hyperparameters()
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:        
+        reduction = "mean"
+        # Calculate separate losses
+        loss = F.mse_loss(pred, target, reduction=reduction)
+        
+        # Get beta coefficient for rotation with default value 1.0
+        return LossOutput(loss, metrics={
+            "loss_attr": loss, 
+        })
+
+    def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
+        if type(x) == list:
+            return torch.cat(list(x), dim=-1)
+        else:
+            return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.decode(self.encode(x))
+
+    def load_hyperparameters(self, alpha, temperature):
+        self.alpha = alpha
+        self.temperature = temperature
+        return self
 
 class AttributeLegacyDomainModule(DomainModule):
 

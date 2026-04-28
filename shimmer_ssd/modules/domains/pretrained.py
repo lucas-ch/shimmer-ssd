@@ -2,7 +2,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from shimmer import DomainModule, GWDecoder, GWEncoder
-from shimmer.modules.gw_module import GWDecoder_legacy
+from shimmer.modules.gw_module import GWDecoder_legacy, GWDecoder_sigmoid
 
 from torch.nn import Linear, Module
 
@@ -16,6 +16,9 @@ from shimmer_ssd.modules.domains.attribute import (
     AttributeDomainModule,
     AttributeLegacyDomainModule,
     AttributeWithUnpairedDomainModule,
+    CatDomainModule,
+    ColorDomainModule,
+    MyModule,
 )
 from shimmer_ssd.modules.domains.text import GRUTextDomainModule, Text2Attr
 from shimmer_ssd.modules.domains.visual import (
@@ -82,6 +85,14 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
         
         case DomainModuleVariant.attr_legacy_no_color:
             module = AttributeLegacyDomainModule(latent_dim=8)
+            module.load_hyperparameters(**domain.args) #alpha, temperature)
+
+        case DomainModuleVariant.cat:
+            module = CatDomainModule()
+            module.load_hyperparameters(**domain.args) #alpha, temperature)
+
+        case DomainModuleVariant.color:
+            module = ColorDomainModule()
             module.load_hyperparameters(**domain.args) #alpha, temperature)
 
         case DomainModuleVariant.t:
@@ -172,7 +183,15 @@ def load_pretrained_domain(
                 gw_decoder = GWDecoder_legacy(
                     workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
                 )
-            
+
+            case DomainModuleVariant.color:
+                gw_encoder = GWEncoder(
+                    module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
+                )
+                gw_decoder = GWDecoder_sigmoid(
+                    workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
+                )
+
             case _:
                 gw_encoder = GWEncoder(
                     module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
