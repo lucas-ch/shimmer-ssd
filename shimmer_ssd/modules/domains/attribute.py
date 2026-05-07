@@ -376,7 +376,7 @@ class CatDomainModule(DomainModule):
         self.temperature = temperature
         return self
 
-class MyModule(DomainModule):
+class PositionDomainModule(DomainModule):
     def __init__(self, latent_dim = 5):
         self.latent_dim = latent_dim
         super().__init__(self.latent_dim)
@@ -437,7 +437,7 @@ class AttributeLegacyDomainModule(DomainModule):
         loss_cat = F.cross_entropy(pred_cat/self.temperature, torch.argmax(target_cat, 1), reduction=reduction)
         
         # Get beta coefficient for rotation with default value 1.0
-        beta = getattr(self, 'beta', 2.0)
+        beta = getattr(self, 'beta', 1.0)
         
         # Combine losses with weights
         loss = self.alpha * (loss_attr_nonrot + beta * loss_attr_rot) + loss_cat

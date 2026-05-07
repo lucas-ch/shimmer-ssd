@@ -18,7 +18,7 @@ from shimmer_ssd.modules.domains.attribute import (
     AttributeWithUnpairedDomainModule,
     CatDomainModule,
     ColorDomainModule,
-    MyModule,
+    PositionDomainModule,
 )
 from shimmer_ssd.modules.domains.text import GRUTextDomainModule, Text2Attr
 from shimmer_ssd.modules.domains.visual import (
@@ -93,6 +93,10 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
 
         case DomainModuleVariant.color:
             module = ColorDomainModule()
+            module.load_hyperparameters(**domain.args) #alpha, temperature)
+
+        case DomainModuleVariant.position:
+            module = PositionDomainModule()
             module.load_hyperparameters(**domain.args) #alpha, temperature)
 
         case DomainModuleVariant.t:
