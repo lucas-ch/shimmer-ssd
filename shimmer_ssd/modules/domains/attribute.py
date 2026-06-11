@@ -326,9 +326,7 @@ class ColorDomainModule(DomainModule):
         loss = F.mse_loss(pred, target, reduction=reduction)
         
         # Get beta coefficient for rotation with default value 1.0
-        return LossOutput(loss, metrics={
-            "loss_color": loss, 
-        })
+        return LossOutput(loss)
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x
@@ -344,6 +342,35 @@ class ColorDomainModule(DomainModule):
         self.temperature = temperature
         return self
 
+class PositionColorDomainModule(DomainModule):
+    def __init__(self, latent_dim = 8):
+        self.latent_dim = latent_dim
+        super().__init__(self.latent_dim)
+        self.save_hyperparameters()
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:        
+        reduction = "mean"
+        loss = F.mse_loss(pred, target, reduction=reduction)
+        
+        return LossOutput(loss)
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.decode(self.encode(x))
+
+    def load_hyperparameters(self, alpha, temperature):
+        self.alpha = alpha
+        self.temperature = temperature
+        return self
+
+
 class CatDomainModule(DomainModule):
     def __init__(self, latent_dim = 3):
         self.latent_dim = latent_dim
@@ -355,12 +382,10 @@ class CatDomainModule(DomainModule):
     ) -> LossOutput:        
         reduction = "mean"
         # Calculate separate losses
-        loss = F.mse_loss(pred, target, reduction=reduction)
+        loss = F.cross_entropy(pred/self.temperature, torch.argmax(target, 1), reduction=reduction)
         
         # Get beta coefficient for rotation with default value 1.0
-        return LossOutput(loss, metrics={
-            "loss_attr": loss, 
-        })
+        return LossOutput(loss)
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x
@@ -390,9 +415,7 @@ class PositionDomainModule(DomainModule):
         loss = F.mse_loss(pred, target, reduction=reduction)
         
         # Get beta coefficient for rotation with default value 1.0
-        return LossOutput(loss, metrics={
-            "loss_attr": loss, 
-        })
+        return LossOutput(loss)
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         if type(x) == list:
@@ -442,10 +465,7 @@ class AttributeLegacyDomainModule(DomainModule):
         # Combine losses with weights
         loss = self.alpha * (loss_attr_nonrot + beta * loss_attr_rot) + loss_cat
 
-        return LossOutput(loss, metrics={
-            "loss_attr": loss_attr, 
-            "loss_cat": loss_cat
-        })
+        return LossOutput(loss)
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         # print("Flag 0 : Before encoding attribute legacy_module")

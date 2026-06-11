@@ -102,7 +102,7 @@ def save_v_latents(
             if split == "train":
                 images = batch[frozenset(["v"])]["v"].to(device)
             else:
-                images = batch["v"].to(device)
+                images = batch[frozenset(["v"])]["v"].to(device)
             latent = visual_domain.encode(images)
             latents.append(latent.detach().cpu().numpy())
 

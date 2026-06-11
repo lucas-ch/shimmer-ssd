@@ -45,6 +45,7 @@ class DomainModuleVariant(Enum):
     cat = (DomainType.cat, "cat")
     color = (DomainType.color, "color")
     position = (DomainType.position, "position")
+    positioncolor = (DomainType.positioncolor, "positioncolor")
     # Same as "attr" but adds an unpaired attributes (information not available in the
     # other domains).
     attr_unpaired = (DomainType.attr, "unpaired")
