@@ -325,7 +325,6 @@ class ColorDomainModule(DomainModule):
         reduction = "mean"
         loss = F.mse_loss(pred, target, reduction=reduction)
         
-        # Get beta coefficient for rotation with default value 1.0
         return LossOutput(loss)
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -344,6 +343,64 @@ class ColorDomainModule(DomainModule):
 
 class PositionColorDomainModule(DomainModule):
     def __init__(self, latent_dim = 8):
+        self.latent_dim = latent_dim
+        super().__init__(self.latent_dim)
+        self.save_hyperparameters()
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:        
+        reduction = "mean"
+        loss = F.mse_loss(pred, target, reduction=reduction)
+        
+        return LossOutput(loss)
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.decode(self.encode(x))
+
+    def load_hyperparameters(self, alpha, temperature):
+        self.alpha = alpha
+        self.temperature = temperature
+        return self
+
+
+class ActionDomainModule(DomainModule):
+    def __init__(self, latent_dim = 3):
+        self.latent_dim = latent_dim
+        super().__init__(self.latent_dim)
+        self.save_hyperparameters()
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:        
+        reduction = "mean"
+        loss = F.mse_loss(pred, target, reduction=reduction)
+        
+        return LossOutput(loss)
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.decode(self.encode(x))
+
+    def load_hyperparameters(self, alpha, temperature):
+        self.alpha = alpha
+        self.temperature = temperature
+        return self
+
+
+class TaskDomainModule(DomainModule):
+    def __init__(self, latent_dim = 3):
         self.latent_dim = latent_dim
         super().__init__(self.latent_dim)
         self.save_hyperparameters()

@@ -46,6 +46,8 @@ class DomainModuleVariant(Enum):
     color = (DomainType.color, "color")
     position = (DomainType.position, "position")
     positioncolor = (DomainType.positioncolor, "positioncolor")
+    action = (DomainType.action, "action")
+    task = (DomainType.task, "task")
     # Same as "attr" but adds an unpaired attributes (information not available in the
     # other domains).
     attr_unpaired = (DomainType.attr, "unpaired")
@@ -412,6 +414,7 @@ class ShimmerConfigInfo(BaseModel):
 
 class Config(ParsedModel):
     seed: int = 0  # training seed
+    max_train_size: int | None  = None # annotation
     ood_seed: int | None = None  # Out of distribution seed
     default_root_dir: Path = (
         Path("./checkpoints")  # Path where to save and load logs and checkpoints

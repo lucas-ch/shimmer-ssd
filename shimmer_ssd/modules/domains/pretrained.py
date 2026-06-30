@@ -20,6 +20,8 @@ from shimmer_ssd.modules.domains.attribute import (
     ColorDomainModule,
     PositionDomainModule,
     PositionColorDomainModule,
+    TaskDomainModule,
+    ActionDomainModule
 )
 from shimmer_ssd.modules.domains.text import GRUTextDomainModule, Text2Attr
 from shimmer_ssd.modules.domains.visual import (
@@ -102,6 +104,14 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
 
         case DomainModuleVariant.positioncolor:
             module = PositionColorDomainModule()
+            module.load_hyperparameters(**domain.args) #alpha, temperature)
+
+        case DomainModuleVariant.action:
+            module = ActionDomainModule()
+            module.load_hyperparameters(**domain.args) #alpha, temperature)
+
+        case DomainModuleVariant.task:
+            module = TaskDomainModule()
             module.load_hyperparameters(**domain.args) #alpha, temperature)
 
         case DomainModuleVariant.t:
@@ -197,7 +207,7 @@ def load_pretrained_domain(
                 gw_encoder = GWEncoder(
                     module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
                 )
-                gw_decoder = GWDecoder_sigmoid(
+                gw_decoder = GWDecoder(
                     workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
                 )
 
@@ -206,6 +216,14 @@ def load_pretrained_domain(
                     module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
                 )
                 gw_decoder = GWDecoder_softmax(
+                    workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
+                )
+
+            case DomainModuleVariant.action:
+                gw_encoder = GWEncoder(
+                    module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
+                )
+                gw_decoder = GWDecoder(
                     workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
                 )
 
